@@ -9,7 +9,7 @@ Fan-made and not affiliated with the OTW or Archive of Our Own.
 
 Build an AO3 site skin without writing any CSS.
 
-Placeholder Link
+[Try it now!](https://mewpichu.github.io/Ao3-Tools/Ao3-Skin-Builder/)
 
 ### What it does
 
