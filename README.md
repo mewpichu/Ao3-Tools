@@ -19,7 +19,7 @@ Placeholder Link
 - **Tidy browsing:** hide summaries, dates, tag rows by type, series lines, or make long tag clouds scrollable
 - **Reading comfort:** font family, text size, line spacing, and column width controls
 - **Color themes:** six one-click presets, plus a custom palette that covers headers, footers, banners, buttons, and the filters panel
-- Settings auto-save in your browser, and the output is ready to paste into **Dashboard → Skins → Create Site Skin** on AO3
+- Settings auto-save locally in your browser, and the CSS output is ready to paste into **Dashboard → Skins → Create Site Skin** on AO3
 
 ---
 
