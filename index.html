@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AO3 Skin Builder. Hide the noise, keep the fic</title>
+  <style>
+    :root {
+      --paper: #f4f1ea;
+      --card: #fdfcf8;
+      --ink: #1c1a17;
+      --ink-soft: #6a6357;
+      --line: #ddd6c6;
+      --line-dark: #b3aa94;
+      --red: #990000;
+      --red-deep: #6e0000;
+      --red-tint: #fdf2ee;
+      --mono: ui-monospace, 'Courier New', Courier, monospace;
+      --serif: Georgia, 'Times New Roman', serif;
+      --sans: 'Lucida Grande', 'Lucida Sans Unicode', Verdana, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    ::selection { background: var(--red); color: #fff; }
+
+    * { scrollbar-width: none; -ms-overflow-style: none; }
+    *::-webkit-scrollbar { display: none; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--paper);
+      background-image: radial-gradient(var(--line) 1px, transparent 1.4px);
+      background-size: 22px 22px;
+      color: var(--ink);
+      line-height: 1.5;
+      font-size: 0.92rem;
+      padding: 36px 14px 56px;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+    }
+
+    .page {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 880px;
+      height: 100%;
+      min-height: 0;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 880px;
+      background: var(--card);
+      border: 1.5px solid var(--ink);
+      border-radius: 4px;
+      box-shadow: 7px 7px 0 rgba(28, 26, 23, 0.12);
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ========= Fixed masthead + tabs ========= */
+
+    .sticky-top {
+      position: relative;
+      z-index: 20;
+      box-shadow: 0 4px 0 rgba(28, 26, 23, 0.08);
+      flex-shrink: 0;
+    }
+
+    .scroll-region {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    /* ========= Masthead ========= */
+
+    header {
+      background: var(--red);
+      border-radius: 2.5px 2.5px 0 0;
+      color: #fff;
+      padding: 26px 28px 22px;
+      border-bottom: 4px solid var(--red-deep);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    header h1 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 1.9rem;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+    }
+    header h1 em { font-style: italic; }
+    header .tagline {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-top: 10px;
+    }
+    .stamp {
+      flex-shrink: 0;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      border: 2px solid rgba(255, 255, 255, 0.75);
+      border-radius: 4px;
+      padding: 5px 10px;
+      transform: rotate(3deg);
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    /* ========= Folder Tabs ========= */
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 10px 18px 0;
+      background: var(--paper);
+      border-bottom: 1.5px solid var(--ink);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      font-family: var(--mono);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+      padding: 10px 14px 11px;
+      border: 1.5px solid transparent;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      color: var(--ink-soft);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.active {
+      background: var(--card);
+      border-color: var(--ink);
+      color: var(--ink);
+      position: relative;
+      margin-bottom: -1.5px;
+      padding-bottom: 12px;
+    }
+    .tab-btn .num { color: var(--red); margin-right: 6px; }
+    .tab-btn .lbl-short { display: none; }
+
+    /* ========= Small Screen ========= */
+
+    @media (max-width: 600px) {
+      body { padding: 16px 8px 40px; }
+      header h1 { font-size: 1.45rem; }
+      .stamp { display: none; }
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        padding: 8px 10px 0;
+        overflow-x: visible;
+      }
+      .tab-btn {
+        padding: 9px 2px 10px;
+        font-size: 0.62rem;
+        letter-spacing: 0.02em;
+        text-align: center;
+      }
+      .tab-btn .num { margin-right: 3px; }
+      .tab-btn .lbl-full { display: none; }
+      .tab-btn .lbl-short { display: inline; }
+      .tab-btn.active { padding-bottom: 11px; }
+      .tab-content { padding: 18px 14px 6px; }
+    }
+
+    /* ========= Panes + Fieldsets ========= */
+
+    .tab-content { display: none; padding: 26px 26px 10px; }
+    .tab-content.active { display: block; }
+
+    fieldset {
+      border: 1px solid var(--line-dark);
+      border-radius: 3px;
+      padding: 14px 16px 16px;
+      margin-bottom: 22px;
+      background: var(--card);
+    }
+    legend {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--red);
+      padding: 0 8px;
+    }
+
+    .help-text {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin: 6px 0 10px;
+    }
+    .help-text code, .steps code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: #efe9da;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      padding: 1px 5px;
+    }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 9px 11px;
+      background: #fff;
+      border: 1px solid var(--line-dark);
+      border-radius: 2px;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 0.88rem;
+    }
+    input[type="text"]:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--ink);
+      box-shadow: 3px 3px 0 var(--line);
+    }
+    textarea { resize: vertical; min-height: 66px; }
+    .field + .field { margin-top: 14px; }
+    .field > label.field-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+
+    /* ========= Checkboxes + Radios ========= */
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .check-label, .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      font-size: 0.86rem;
+      background: #fff;
+      padding: 8px 11px;
+      border-radius: 2px;
+      border: 1px solid var(--line-dark);
+      position: relative;
+      user-select: none;
+    }
+    .check-label:hover, .radio-label:hover { border-color: var(--ink); }
+    .check-label input, .radio-label input {
+      position: absolute;
+      opacity: 0;
+      width: 1px; height: 1px;
+      pointer-events: none;
+    }
+    .check-label .box, .radio-label .box {
+      font-family: var(--mono);
+      color: var(--ink-soft);
+      white-space: pre;
+      flex-shrink: 0;
+    }
+    .check-label .box::before { content: '[ ]'; }
+    .radio-label .box::before { content: '( )'; }
+    .check-label:has(input:checked) {
+      border-color: var(--red);
+      background: var(--red-tint);
+    }
+    .check-label:has(input:checked) .box::before {
+      content: '[✓]';
+      color: var(--red);
+      font-weight: 700;
+    }
+    .radio-label:has(input:checked) {
+      border-color: var(--red);
+      background: var(--red-tint);
+    }
+    .radio-label:has(input:checked) .box::before {
+      content: '(•)';
+      color: var(--red);
+      font-weight: 700;
+    }
+    .check-label:has(input:focus-visible), .radio-label:has(input:focus-visible) {
+      outline: 2px dashed var(--red);
+      outline-offset: 2px;
+    }
+
+    .check-label:has(input:disabled) { opacity: 0.45; cursor: not-allowed; }
+
+    /* preset swatch dots */
+    .dots { margin-left: auto; display: flex; gap: 4px; }
+    .dots i {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      display: block;
+    }
+
+    /* ========= Pallete Cells ========= */
+    
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 8px;
+    }
+    .color-cell {
+      background: #fff;
+      padding: 8px 10px;
+      border-radius: 2px;
+      border: 1px solid var(--line-dark);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 0.86rem;
+    }
+    .color-cell:hover { border-color: var(--ink); }
+    .color-cell:has(.sw-check input:checked) {
+      border-color: var(--red);
+      background: var(--red-tint);
+    }
+    .color-cell input[type="color"] {
+      border: 1px solid var(--line-dark);
+      background: #fff;
+      width: 34px; height: 30px;
+      padding: 2px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .color-cell .sw-name { flex: 1; }
+    .sw-check { cursor: pointer; position: relative; display: flex; align-items: center; }
+    .sw-check input {
+      position: absolute;
+      opacity: 0;
+      width: 1px; height: 1px;
+      pointer-events: none;
+    }
+    .sw-check .box {
+      font-family: var(--mono);
+      color: var(--ink-soft);
+      white-space: pre;
+    }
+    .sw-check .box::before { content: '[ ]'; }
+    .sw-check:hover .box::before { color: var(--ink); }
+    .sw-check:has(input:checked) .box::before {
+      content: '[✓]';
+      color: var(--red);
+      font-weight: 700;
+    }
+    .sw-check:has(input:focus-visible) {
+      outline: 2px dashed var(--red);
+      outline-offset: 2px;
+    }
+
+    /* ========= Output ========= */
+
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      margin: 4px 0 22px;
+    }
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 0 0 12px 36px;
+      font-size: 0.9rem;
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0; top: 0;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .output-label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+      display: block;
+    }
+    #css-output {
+      width: 100%;
+      height: 360px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line-dark);
+      border-radius: 2px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    #css-output:focus {
+      outline: none;
+      border-color: var(--ink);
+      box-shadow: 3px 3px 0 var(--line);
+    }
+
+    .button-bar { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .action-btn {
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 10px 18px;
+      background: var(--red);
+      border: 1.5px solid var(--ink);
+      border-radius: 3px;
+      box-shadow: 3px 3px 0 var(--ink);
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.08s, box-shadow 0.08s;
+    }
+    .action-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+    .action-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+    .action-btn.secondary { background: #efe9da; color: var(--ink); }
+    .action-btn.danger { background: #fff; color: var(--red); }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 14px 26px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div class="container">
+  <div class="sticky-top">
+  <header>
+    <div>
+      <h1>AO3 <em>Skin Builder</em></h1>
+      <p class="tagline">[ hide the noise · keep the fic ]</p>
+    </div>
+    <span class="stamp">fan-made</span>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-stats', this)"><span class="num">01</span><span class="lbl-full">Stats &amp; Buttons</span><span class="lbl-short">Stats</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-filters', this)"><span class="num">02</span><span class="lbl-full">Content &amp; Tags</span><span class="lbl-short">Content</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-style', this)"><span class="num">03</span><span class="lbl-full">Appearance</span><span class="lbl-short">Style</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-output', this)"><span class="num">04</span><span class="lbl-full">Get the CSS</span><span class="lbl-short">CSS</span></button>
+  </nav>
+  </div>
+
+  <div class="scroll-region">
+  <!-- ═══ TAB 1 · STATS & BUTTONS ═══ -->
+  <section id="tab-stats" class="tab-content active">
+
+    <fieldset>
+      <legend>[ scope ]</legend>
+      <div class="field">
+        <label class="field-label" for="username">Your AO3 Username</label>
+        <input type="text" id="username" placeholder="e.g. writing_is_fun" oninput="compileCSS()">
+        <p class="help-text">Only needed if you want to hide stats on <em>your own</em> works. Leave blank for site-wide hiding.</p>
+      </div>
+      <div class="checkbox-grid">
+        <label class="radio-label"><input type="radio" name="statScope" value="mine" checked onchange="compileCSS()"><span class="box"></span>Only on My Works</label>
+        <label class="radio-label"><input type="radio" name="statScope" value="all" onchange="compileCSS()"><span class="box"></span>Site-Wide (Zen Mode)</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ hide these statistics ]</legend>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="stat-kudos" onchange="compileCSS()"><span class="box"></span>Kudos</label>
+        <label class="check-label"><input type="checkbox" id="stat-hits" onchange="compileCSS()"><span class="box"></span>Hits</label>
+        <label class="check-label"><input type="checkbox" id="stat-bookmarks" onchange="compileCSS()"><span class="box"></span>Bookmarks</label>
+        <label class="check-label"><input type="checkbox" id="stat-comments" onchange="compileCSS()"><span class="box"></span>Comment Counts</label>
+        <label class="check-label"><input type="checkbox" id="stat-words" onchange="compileCSS()"><span class="box"></span>Word Counts</label>
+        <label class="check-label"><input type="checkbox" id="stat-chapters" onchange="compileCSS()"><span class="box"></span>Chapter Counts</label>
+        <label class="check-label"><input type="checkbox" id="stat-language" onchange="compileCSS()"><span class="box"></span>Language</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ engagement buttons ]</legend>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="hide-btn-kudos" onchange="compileCSS()"><span class="box"></span>Kudos Button</label>
+        <label class="check-label"><input type="checkbox" id="hide-btn-bookmark" onchange="compileCSS()"><span class="box"></span>Bookmark Button</label>
+        <label class="check-label"><input type="checkbox" id="hide-btn-subscribe" onchange="compileCSS()"><span class="box"></span>Subscribe Button</label>
+        <label class="check-label"><input type="checkbox" id="hide-btn-share" onchange="compileCSS()"><span class="box"></span>Share Button</label>
+        <label class="check-label"><input type="checkbox" id="hide-btn-download" onchange="compileCSS()"><span class="box"></span>Download Button</label>
+      </div>
+    </fieldset>
+
+
+
+  </section>
+
+  <!-- ═══ TAB 2 · CONTENT & TAGS ═══ -->
+  <section id="tab-filters" class="tab-content">
+
+    <fieldset>
+      <legend>[ where to apply ]</legend>
+      <div class="checkbox-grid">
+        <label class="radio-label"><input type="radio" name="contentScope" value="blurb" checked onchange="compileCSS()"><span class="box"></span>Blurbs Only</label>
+        <label class="radio-label"><input type="radio" name="contentScope" value="both" onchange="compileCSS()"><span class="box"></span>Blurbs + Work Pages</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ hide tag rows by type ]</legend>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="hide-tag-warnings" onchange="compileCSS()"><span class="box"></span>Archive Warnings</label>
+        <label class="check-label"><input type="checkbox" id="hide-tag-relationships" onchange="compileCSS()"><span class="box"></span>Relationships</label>
+        <label class="check-label"><input type="checkbox" id="hide-tag-characters" onchange="compileCSS()"><span class="box"></span>Characters</label>
+        <label class="check-label"><input type="checkbox" id="hide-tag-freeforms" onchange="compileCSS()"><span class="box"></span>Freeform/Additional Tags</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ tidy up details ]</legend>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="hide-summary" onchange="compileCSS()"><span class="box"></span>Summaries</label>
+        <label class="check-label"><input type="checkbox" id="hide-date-posted" onchange="compileCSS()"><span class="box"></span>Posted Date</label>
+        <label class="check-label"><input type="checkbox" id="hide-date-updated" onchange="compileCSS()"><span class="box"></span>Updated Date</label>
+        <label class="check-label"><input type="checkbox" id="hide-series" onchange="compileCSS()"><span class="box"></span>"Part of a Series" Line</label>
+        <label class="check-label"><input type="checkbox" id="scroll-tags" onchange="compileCSS()"><span class="box"></span>Truncate Long Tag Clouds</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ on the work page ]</legend>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="hide-notes" onchange="compileCSS()"><span class="box"></span>Beginning Notes</label>
+        <label class="check-label"><input type="checkbox" id="hide-endnotes" onchange="compileCSS()"><span class="box"></span>End Notes</label>
+        <label class="check-label"><input type="checkbox" id="hide-inspired" onchange="compileCSS()"><span class="box"></span>"Works Inspired by This One"</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ comments &amp; kudos lists ]</legend>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="hide-kudos-list" onchange="compileCSS()"><span class="box"></span>List of Who Left Kudos</label>
+        <label class="check-label"><input type="checkbox" id="hide-comments" onchange="compileCSS()"><span class="box"></span>Entire Comment Section</label>
+        <label class="check-label"><input type="checkbox" id="hide-comment-form" onchange="compileCSS()"><span class="box"></span>Comment Form Only</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ language filter ]</legend>
+      <div class="field">
+        <label class="field-label" for="filter-language">Only Show Works Written In</label>
+        <select id="filter-language" onchange="compileCSS()">
+          <option value="">All Languages (No Filter)</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="it">Italiano</option>
+          <option value="ptBR">Português brasileiro</option>
+          <option value="ru">Русский</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+          <option value="pl">Polski</option>
+          <option value="id">Bahasa Indonesia</option>
+          <option value="ar">العربية</option>
+          <option value="tr">Türkçe</option>
+          <option value="nl">Nederlands</option>
+          <option value="sv">Svenska</option>
+        </select>
+        <p class="help-text">Hides blurbs in any other language. Don't see yours? Pick anything, then edit the <code>[lang="..."]</code> code in the output by hand.</p>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ block specific tags ]</legend>
+      <p class="help-text">Comma-separated, exactly as they appear on AO3. Use <code>*</code> as a wildcard, so <code>Hurt*</code> catches <code>Hurt/Comfort</code>. Special characters like <code>/</code> and <code>&amp;</code> are handled automatically.</p>
+      <textarea id="filter-tags" placeholder="Underage, Coffee Shop AU, Hurt/Comfort" oninput="compileCSS()"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ block specific authors ]</legend>
+      <p class="help-text">Comma-separated AO3 usernames. Use <code>*</code> as a wildcard.</p>
+      <textarea id="filter-authors" placeholder="username1, username2" oninput="compileCSS()"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ block specific fandoms ]</legend>
+      <p class="help-text">Comma-separated, exactly as they appear on AO3. Use <code>*</code> as a wildcard, so <code>Marvel*</code> catches every Marvel fandom.</p>
+      <textarea id="filter-fandoms" placeholder="Supernatural, Marvel*" oninput="compileCSS()"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ block specific works ]</legend>
+      <p class="help-text">Comma-separated work IDs (the numbers in the work's URL).</p>
+      <input type="text" id="filter-works" placeholder="12345678, 99887766" oninput="compileCSS()">
+    </fieldset>
+
+  </section>
+
+  <!-- ═══ TAB 3 · APPEARANCE ═══ -->
+  <section id="tab-style" class="tab-content">
+
+    <fieldset>
+      <legend>[ one-click presets ]</legend>
+      <p class="help-text">Pick a preset to fill in the palette below, then tweak any swatch to make it yours.</p>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" class="preset-check" id="preset-reversi" value="reversi" onchange="applyPreset(this)"><span class="box"></span>Reversi (Dark)
+          <span class="dots"><i style="background:#333333"></i><i style="background:#eeeeee"></i><i style="background:#5998d6"></i></span></label>
+        <label class="check-label"><input type="checkbox" class="preset-check" id="preset-contrast" value="contrast" onchange="applyPreset(this)"><span class="box"></span>High Contrast (Dark)
+          <span class="dots"><i style="background:#000000"></i><i style="background:#ffffff"></i><i style="background:#ffeb3b"></i></span></label>
+        <label class="check-label"><input type="checkbox" class="preset-check" id="preset-midnight" value="midnight" onchange="applyPreset(this)"><span class="box"></span>Midnight Blue (Dark)
+          <span class="dots"><i style="background:#1b2230"></i><i style="background:#dde3ee"></i><i style="background:#7fb2ff"></i></span></label>
+        <label class="check-label"><input type="checkbox" class="preset-check" id="preset-sage" value="sage" onchange="applyPreset(this)"><span class="box"></span>Sage Green
+          <span class="dots"><i style="background:#e4ebe0"></i><i style="background:#2b3a2e"></i><i style="background:#3f7a4f"></i></span></label>
+        <label class="check-label"><input type="checkbox" class="preset-check" id="preset-offwhite" value="offwhite" onchange="applyPreset(this)"><span class="box"></span>Off White
+          <span class="dots"><i style="background:#f6f4ef"></i><i style="background:#2f2d2a"></i><i style="background:#990000"></i></span></label>
+        <label class="check-label"><input type="checkbox" class="preset-check" id="preset-pink" value="pink" onchange="applyPreset(this)"><span class="box"></span>Pastel Pink
+          <span class="dots"><i style="background:#f9e4ea"></i><i style="background:#4a2e38"></i><i style="background:#c2577a"></i></span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ typography ]</legend>
+      <div class="field">
+        <label class="field-label" for="reading-font">Font Family (Site-Wide)</label>
+        <select id="reading-font" onchange="compileCSS()">
+          <option value="">AO3 Default (Lucida Grande)</option>
+          <option value="Georgia, 'Times New Roman', serif" style="font-family: Georgia, 'Times New Roman', serif;">Georgia: Classic Book Serif</option>
+          <option value="'Palatino Linotype', Palatino, 'Book Antiqua', serif" style="font-family: 'Palatino Linotype', Palatino, serif;">Palatino: Refined Literary Serif</option>
+          <option value="Garamond, Baskerville, 'Hoefler Text', serif" style="font-family: Garamond, Baskerville, serif;">Garamond / Baskerville: Traditional Novel</option>
+          <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">System Sans: Clean &amp; Neutral</option>
+          <option value="Verdana, Geneva, sans-serif" style="font-family: Verdana, Geneva, sans-serif;">Verdana: High-Legibility Screen Sans</option>
+          <option value="'Trebuchet MS', 'Lucida Sans', sans-serif" style="font-family: 'Trebuchet MS', sans-serif;">Trebuchet MS: Humanist Sans</option>
+          <option value="'Courier New', Courier, monospace" style="font-family: 'Courier New', Courier, monospace;">Courier New: Typewriter</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label" for="reading-size">Story Text Size</label>
+        <select id="reading-size" onchange="compileCSS()">
+          <option value="">AO3 Default</option>
+          <option value="0.95rem">Slightly Smaller</option>
+          <option value="1rem">Roomy</option>
+          <option value="1.1rem">Large</option>
+          <option value="1.25rem">Extra Large</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label" for="reading-height">Line Spacing</label>
+        <select id="reading-height" onchange="compileCSS()">
+          <option value="">AO3 Default</option>
+          <option value="1.4">Tight</option>
+          <option value="1.6">Comfortable</option>
+          <option value="1.8">Airy</option>
+          <option value="2">Double-Spaced-ish</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ measure ]</legend>
+      <div class="field">
+        <label class="field-label" for="reading-width">Reading Column Max Width</label>
+        <select id="reading-width" onchange="compileCSS()">
+          <option value="">Full Width (Default)</option>
+          <option value="600px">Compact: 600px</option>
+          <option value="750px">Comfortable Book: 750px</option>
+          <option value="900px">Wide: 900px</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ fine-tune the palette ]</legend>
+      <p class="help-text">Pick four colors and the builder works out everything else (menus, buttons, borders, shadows, highlights) using the same structure as AO3's Reversi skin. Light and dark palettes both work.</p>
+      <label class="check-label" style="margin-bottom:10px;"><input type="checkbox" id="use-palette" onchange="paletteToggled(this)"><span class="box"></span>Use This Color Theme</label>
+      <div class="color-grid">
+        <div class="color-cell">
+          <input type="color" id="col-bg" value="#333333" oninput="paletteTouched()">
+          <span class="sw-name">Page Background</span>
+        </div>
+        <div class="color-cell">
+          <input type="color" id="col-card" value="#333333" oninput="paletteTouched()">
+          <span class="sw-name">Blurb &amp; Box Background</span>
+        </div>
+        <div class="color-cell">
+          <input type="color" id="col-text" value="#eeeeee" oninput="paletteTouched()">
+          <span class="sw-name">Text</span>
+        </div>
+        <div class="color-cell">
+          <input type="color" id="col-link" value="#5998d6" oninput="paletteTouched()">
+          <span class="sw-name">Links &amp; Accent</span>
+        </div>
+      </div>
+      <p id="palette-note" class="help-text" style="display:none; color: var(--red);"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>[ hide site ui ]</legend>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="hide-footer" onchange="compileCSS()"><span class="box"></span>Site Footer</label>
+        <label class="check-label"><input type="checkbox" id="hide-icons" onchange="compileCSS()"><span class="box"></span>User Icons Everywhere</label>
+        <label class="check-label"><input type="checkbox" id="hide-muted-notice" onchange="compileCSS()"><span class="box"></span>Muted Users Notice</label>
+      </div>
+    </fieldset>
+
+  </section>
+
+  <!-- ═══ TAB 4 · OUTPUT ═══ -->
+  <section id="tab-output" class="tab-content">
+
+    <ol class="steps">
+      <li>Copy the CSS below (or download the file).</li>
+      <li>On AO3, go to <code>Dashboard → Skins → My Site Skins → Create Site Skin</code>.</li>
+      <li>Give it a name, paste the CSS into the big text field, and hit <code>Submit</code>.</li>
+      <li>Back on the Skins page, press <code>Use</code>.</li>
+    </ol>
+
+    <label class="output-label" for="css-output">your ao3-ready css</label>
+    <textarea id="css-output" readonly></textarea>
+    <div class="button-bar">
+      <button class="action-btn" id="copy-btn" onclick="copyCSS()">Copy to Clipboard</button>
+      <button class="action-btn secondary" onclick="downloadCSS()">Download .css</button>
+      <button class="action-btn danger" onclick="resetAll(this)">Reset Everything</button>
+    </div>
+    <p class="help-text" style="margin-top:14px;">Your settings are saved automatically in this browser. Come back and tweak any time.</p>
+  </section>
+  </div>
+</div>
+
+<footer>a fan-made tool · not affiliated with the OTW or Archive of Our Own</footer>
+</div>
+
+<script>
+  const STORAGE_KEY = 'ao3-skin-builder-v1';
+
+    /* ========= Tabs ========= */
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    document.querySelector('.scroll-region').scrollTop = 0;
+    if (tabId === 'tab-output') compileCSS();
+  }
+
+  function parseList(input) {
+    return input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+  }
+
+  /* Matches AO3's tag URLs */
+  function ao3Encode(s) {
+    const p = s.replace(/\//g, '*s*')
+               .replace(/&/g, '*a*')
+               .replace(/\./g, '*d*')
+               .replace(/\?/g, '*q*')
+               .replace(/#/g, '*h*');
+    return encodeURIComponent(p).replace(/%(24|2B|2C|3A|3B|3D|40)/gi, m => decodeURIComponent(m));
+  }
+
+  function hrefMatch(pattern, prefix, suffix, encode, endsHref = true) {
+    const parts = pattern.split('*').map(encode);
+    const endOp = endsHref ? '$=' : '*=';
+    if (parts.length === 1) return `[href${endOp}"${prefix}${parts[0]}${suffix}"]`;
+    const out = [];
+    const first = parts[0], last = parts[parts.length - 1];
+    out.push(first ? `[href*="${prefix}${first}"]` : `[href*="${prefix}"]`);
+    parts.slice(1, -1).forEach(p => { if (p) out.push(`[href*="${p}"]`); });
+    if (last) out.push(`[href${endOp}"${last}${suffix}"]`);
+    return out.join('');
+  }
+
+  function cleanUser(u) {
+    return u.replace(/[^A-Za-z0-9_]/g, '');
+  }
+
+    /* ========= Presets ========= */
+
+  const PRESETS = {
+    reversi:  { bg: '#333333', card: '#333333', text: '#eeeeee', link: '#5998d6' },
+    contrast: { bg: '#000000', card: '#0d0d0d', text: '#ffffff', link: '#ffeb3b' },
+    midnight: { bg: '#1b2230', card: '#232c3d', text: '#dde3ee', link: '#7fb2ff' },
+    sage:     { bg: '#e4ebe0', card: '#f3f7f0', text: '#2b3a2e', link: '#3f7a4f' },
+    offwhite: { bg: '#f6f4ef', card: '#fdfcf9', text: '#2f2d2a', link: '#990000' },
+    pink:     { bg: '#f9e4ea', card: '#fff5f8', text: '#4a2e38', link: '#c2577a' }
+  };
+
+  function applyPreset(el) {
+    if (el.checked) {
+      document.querySelectorAll('.preset-check').forEach(p => { if (p !== el) p.checked = false; });
+      const p = PRESETS[el.value];
+      ['bg', 'card', 'text', 'link'].forEach(k => {
+        document.getElementById('col-' + k).value = p[k];
+      });
+      document.getElementById('use-palette').checked = true;
+    } else {
+      document.getElementById('use-palette').checked = false;
+    }
+    compileCSS();
+  }
+
+  function paletteToggled(el) {
+    if (!el.checked) document.querySelectorAll('.preset-check').forEach(p => p.checked = false);
+    compileCSS();
+  }
+
+  /* Tweaking a swatch turns the theme on and clears the preset tick */
+  function paletteTouched() {
+    document.getElementById('use-palette').checked = true;
+    document.querySelectorAll('.preset-check').forEach(p => p.checked = false);
+    compileCSS();
+  }
+
+    /* ========= Color Engine =========
+     Every rule below mirrors a block in the Reversi skin.
+     Reversi's fixed grays are swapped for tones derived from the 4 picks,
+     and it flips for light palettes so depth still reads right. */
+
+  function hex2rgb(h) {
+    h = h.replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const n = parseInt(h, 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255];
+  }
+  function rgb2hex(c) {
+    return '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('');
+  }
+  function mix(a, b, t) {
+    const A = hex2rgb(a), B = hex2rgb(b);
+    return rgb2hex(A.map((v, i) => v + (B[i] - v) * t));
+  }
+  function lum(h) {
+    const [r, g, b] = hex2rgb(h).map(v => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  function contrast(a, b) {
+    const x = lum(a), y = lum(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  }
+  /* Nudge a color lighter or darker until it's readable on bg */
+  function ensureContrast(fg, bg, ratio) {
+    if (contrast(fg, bg) >= ratio) return fg;
+    const toward = lum(bg) < 0.2 ? '#ffffff' : '#000000';
+    for (let t = 0.05; t <= 1; t += 0.05) {
+      const c = mix(fg, toward, t);
+      if (contrast(c, bg) >= ratio) return c;
+    }
+    return toward;
+  }
+
+  function makeTheme(bg, card, text, accent) {
+    const dark = lum(mix(bg, card, 0.5)) < 0.2;
+    const T = { bg, card, text, accent, dark };
+    if (dark) {
+      /* Reversi's own ratios: #333 → #2a2a2a, #111, #222, #555, #232323 */
+      T.shade1      = mix(card, '#000000', 0.18);
+      T.shade2      = mix(card, '#000000', 0.67);
+      T.deep        = mix(card, '#000000', 0.9);
+      T.border      = mix(card, '#000000', 0.33);
+      T.outline     = T.shade2;
+      T.borderSoft  = mix(card, '#ffffff', 0.1667);
+      T.shadow      = mix(bg, '#000000', 0.9);
+      T.inset       = T.shadow;
+      T.strong      = mix(text, '#ffffff', 0.6);
+      T.btn         = mix(card, '#ffffff', 0.1667);
+      T.btnLow      = mix(card, '#000000', 0.31);
+      T.btnHi       = T.btn;
+      T.btnHoverBd  = T.deep;
+      T.disabled    = T.border;
+      T.nav         = mix(bg, '#000000', 0.55);
+      T.footer      = T.nav;
+      T.whiteGlow   = 'rgba(255,255,255,.25)';
+      T.cautionBd   = '#807640';
+      T.cautionTx   = '#dbbc54';
+    } else {
+      /* Light palettes: depth comes from tinting toward the text color */
+      T.shade1      = mix(card, text, 0.06);
+      T.shade2      = mix(card, text, 0.1);
+      T.deep        = mix(card, text, 0.13);
+      T.border      = mix(card, text, 0.25);
+      T.outline     = T.border;
+      T.borderSoft  = mix(card, text, 0.16);
+      T.shadow      = 'rgba(0,0,0,.18)';
+      T.inset       = 'rgba(0,0,0,.12)';
+      T.strong      = mix(text, '#000000', 0.35);
+      T.btn         = mix(card, '#ffffff', 0.5);
+      T.btnLow      = mix(card, text, 0.1);
+      T.btnHi       = mix(card, '#ffffff', 0.85);
+      T.btnHoverBd  = mix(card, text, 0.4);
+      T.disabled    = T.shade2;
+      T.nav         = accent;
+      T.footer      = mix(bg, text, 0.08);
+      T.whiteGlow   = 'rgba(0,0,0,.1)';
+      T.cautionBd   = '#b59a2e';
+      T.cautionTx   = '#7a6212';
+    }
+    T.muted      = ensureContrast(mix(text, card, 0.45), card, 3);
+    T.accentText = ensureContrast(accent, card, 3);
+    const onDark = dark ? '#111111' : mix(text, '#000000', 0.5);
+    T.onAccent   = contrast(onDark, accent) >= contrast('#ffffff', accent) ? onDark : '#ffffff';
+    T.navText    = dark ? T.strong : T.onAccent;
+    return T;
+  }
+
+  function buildThemeCSS(bg, card, text, accent) {
+    const T = makeTheme(bg, card, text, accent);
+    return `/* Color theme (${T.dark ? 'dark' : 'light'}, built on Reversi) */
+#outer .region,
+#footer .group,
+.post fieldset fieldset,
+fieldset fieldset {
+  background: none;
+}
+
+body,
+#outer,
+.javascript {
+  background: ${T.bg};
+  color: ${T.text};
+}
+
+.group,
+.group .group,
+.region,
+.flash,
+fieldset,
+fieldset fieldset ul,
+form dl,
+textarea,
+#main .verbose legend,
+.verbose fieldset,
+.notice,
+ul.notes,
+input,
+table,
+th,
+td:hover,
+tr:hover,
+.symbol .question:hover,
+#modal,
+.ui-sortable li,
+.required .autocomplete,
+.autocomplete .notice,
+.system .intro,
+.comment_error,
+.kudos_error,
+div.dynamic,
+.dynamic form,
+#ui-datepicker-div,
+.ui-datepicker table,
+.annotation,
+.statistics .index li:nth-of-type(even),
+#tos_prompt,
+.nomination dt {
+  background: ${T.card};
+  color: ${T.text};
+  border-color: ${T.border};
+  outline-color: ${T.outline};
+  box-shadow: none;
+}
+
+ol.index.group,
+ul.index.group {
+  background: transparent;
+}
+
+#header .actions a:hover,
+#header .actions a:focus,
+#header .dropdown:hover a,
+#header .open a,
+#header .menu,
+#small_login,
+.group.listbox,
+fieldset fieldset.listbox,
+form blockquote.userstuff,
+input:focus,
+textarea:focus,
+li.relationships a,
+.group.listbox .index,
+.dashboard fieldset fieldset.listbox .index,
+#dashboard a:hover,
+th,
+#dashboard .secondary,
+.secondary,
+.work.navigation .download,
+.javascript .work.navigation .download .secondary,
+.thread .even,
+.ui-datepicker tr:hover {
+  background: ${T.shade1};
+}
+
+#header .dropdown .menu a:hover,
+#header .dropdown .menu a:focus,
+.splash .favorite li:nth-of-type(odd) a,
+.ui-datepicker td:hover,
+#tos_prompt .heading,
+#tos_prompt [disabled] {
+  background: ${T.shade2};
+}
+
+#header ul.primary {
+  background: ${T.nav};
+}
+
+#outer #footer {
+  background: ${T.footer};
+}
+
+.toggled form {
+  background: ${T.shade1};
+}
+
+#header ul.primary,
+#footer,
+#dashboard ul,
+dl.meta,
+dl.meta .wrapper,
+.group.listbox,
+fieldset fieldset.listbox,
+#main li.blurb,
+form blockquote.userstuff,
+div.comment,
+li.comment,
+.toggled form,
+form dl dt,
+form.single fieldset,
+#inner .module .heading,
+.bookmark .status span,
+.splash .news li,
+.authentication fieldset,
+.filters .group dt.bookmarker {
+  border-color: ${T.borderSoft};
+}
+
+.group.listbox,
+fieldset fieldset.listbox,
+#main li.blurb,
+.wrapper:has(> table, > .meta),
+#dashboard .secondary,
+.secondary,
+.work.navigation .download,
+.javascript .work.navigation .download .secondary,
+form blockquote.userstuff,
+.thread .comment,
+.toggled form {
+  box-shadow: 1px 1px 3px ${T.shadow};
+}
+
+#dashboard .current,
+.actions a:active,
+#outer .current,
+a.current,
+.current a:visited,
+span.unread,
+.replied,
+span.claimed,
+dl.index dd,
+.own,
+.draft,
+.unread,
+.child,
+.unwrangled,
+.unreviewed,
+.ui-sortable li:hover {
+  background: ${T.deep};
+  border-color: ${T.borderSoft};
+  box-shadow: -1px -1px 3px ${T.shadow};
+}
+
+input,
+textarea {
+  box-shadow: inset 0 1px 2px ${T.inset};
+}
+
+li.blurb,
+.blurb .blurb,
+.listbox .index,
+fieldset fieldset.listbox,
+.dashboard .listbox .index {
+  box-shadow: inset 1px 1px 3px ${T.inset};
+}
+
+#footer a:hover,
+#footer a:focus,
+#footer button:hover,
+#footer button:focus,
+.autocomplete .dropdown ul li:hover,
+.autocomplete .dropdown li.selected,
+a.tag:hover,
+.listbox .heading a.tag:visited:hover,
+.symbol .question,
+.qtip-content,
+.splash .favorite li:nth-of-type(odd) a:hover,
+.splash .favorite li:nth-of-type(odd) a:focus {
+  background: ${T.accent};
+  color: ${T.onAccent};
+}
+
+#header #greeting img,
+#header .heading a,
+#header .heading a:visited,
+#header .user a:hover,
+#header .user a:focus,
+#header fieldset,
+#header form,
+#header p,
+#dashboard a:hover,
+.actions a:hover,
+.actions button:hover,
+.actions input:hover,
+.delete a,
+span.delete,
+span.unread,
+.replied,
+span.claimed,
+.draggable,
+.droppable,
+span.requested,
+a.work,
+.blurb h4 a:link,
+.blurb h4 img,
+.splash .module h3,
+.splash .browse li a:before,
+.required,
+.error,
+.comment_error,
+.kudos_error,
+a.cloud7,
+a.cloud8,
+#tos_prompt .heading {
+  color: ${T.accentText};
+}
+
+#greeting .icon,
+#dashboard,
+#dashboard.own,
+.error,
+.comment_error,
+.kudos_error,
+.LV_invalid,
+.LV_invalid_field,
+input.LV_invalid_field:hover,
+input.LV_invalid_field:active,
+textarea.LV_invalid_field:hover,
+textarea.LV_invalid_field:active,
+.qtip-content {
+  border-color: ${T.accent};
+}
+
+a,
+a:link,
+a.tag,
+#header a,
+#header a:visited,
+#header .primary .open a,
+#header .primary .dropdown:hover a,
+#header .primary .dropdown a:focus,
+#header #search input:focus,
+#header #search input:hover,
+#dashboard a,
+#dashboard span,
+#dashboard .current,
+.heading,
+.group .heading,
+.filters dt a:hover {
+  color: ${T.strong};
+}
+
+a:visited,
+.actions a:visited,
+.action a:link,
+.action a:visited,
+.listbox .heading a:visited,
+span.series .divider {
+  color: ${T.muted};
+}
+
+.actions a,
+.actions a:link,
+.action,
+.action:link,
+.actions button,
+.actions input,
+input[type="submit"],
+button,
+.current,
+.actions label,
+#header .actions a {
+  background: ${T.btn};
+  border-color: ${T.border};
+  color: ${T.text};
+  box-shadow: inset 0 -8px 4px ${T.btnLow}, inset 0 8px 7px ${T.btnHi};
+  text-shadow: none;
+}
+
+.actions a:hover,
+.actions button:hover,
+.actions input:hover,
+#dashboard a:hover,
+label.action:hover,
+.action:hover,
+.actions a:focus,
+.actions button:focus,
+.actions input:focus,
+#dashboard a:focus,
+.actions .disabled select {
+  color: ${T.muted};
+  border-color: ${T.btnHoverBd};
+  box-shadow: inset 2px 2px 2px ${T.inset};
+}
+
+.actions a:active,
+.current,
+a.current,
+.current a:visited {
+  color: ${T.strong};
+  background: ${T.btn};
+  border-color: ${T.strong};
+  box-shadow: inset 1px 1px 3px ${T.inset};
+}
+
+.delete a,
+span.delete {
+  box-shadow: -1px -1px 2px ${T.whiteGlow};
+}
+
+.actions label.disabled {
+  background: ${T.disabled};
+  box-shadow: none;
+}
+
+ul.required-tags,
+.bookmark .status span,
+.blurb .icon {
+  opacity: 0.9;
+  border: 0;
+}
+
+#outer .group .heading,
+#header .actions a,
+fieldset.listbox .heading,
+.userstuff .heading,
+.heading,
+.userstuff h2 {
+  text-shadow: none;
+  color: ${T.strong};
+  background: none;
+}
+
+#header .actions a,
+fieldset fieldset,
+.mce-container button,
+.filters .expander,
+.actions .disabled select {
+  box-shadow: none;
+}
+
+fieldset fieldset.listbox {
+  outline: none;
+}
+
+form dd.required {
+  color: ${T.text};
+}
+
+.mce-container input:focus {
+  background: #F3EFEC;
+}
+
+.announcement,
+.event.announcement {
+  background: ${T.shade1};
+  color: ${T.text};
+}
+
+.announcement .userstuff a,
+.announcement .userstuff a:link,
+.event.announcement .userstuff a {
+  color: ${T.accentText};
+}
+
+.announcement .userstuff a:visited {
+  color: ${T.muted};
+}
+
+.announcement .userstuff a:hover,
+.announcement .userstuff a:focus {
+  color: ${T.strong};
+}
+
+.filters .expander {
+  color: ${T.text};
+}
+
+.announcement .action {
+  background: ${T.card};
+}
+
+.announcement .action:hover,
+.announcement .action:focus {
+  color: ${T.strong};
+  box-shadow: inset 2px 2px 2px ${T.inset};
+}
+
+.caution {
+  border-color: ${T.cautionBd};
+  color: ${T.cautionTx};
+}
+
+/* Main nav bar text (kept separate so the greeting links stay readable) */
+#header ul.primary a,
+#header ul.primary a:visited {
+  color: ${T.navText};
+}
+
+#header ul.primary a:hover,
+#header ul.primary a:focus,
+#header ul.primary .open a,
+#header ul.primary .dropdown:hover a,
+#header ul.primary .menu a {
+  color: ${T.strong};
+}
+
+#footer,
+#footer a,
+#footer button,
+#footer .heading {
+  color: ${T.text};
+}`;
+  }
+
+  function updatePaletteNote() {
+    const note = document.getElementById('palette-note');
+    if (!note) return;
+    const g = id => document.getElementById(id).value;
+    const bits = [];
+    const tc = contrast(g('col-text'), g('col-card'));
+    const tb = contrast(g('col-text'), g('col-bg'));
+    if (tc < 4.5) bits.push(`text on blurbs is hard to read (${tc.toFixed(1)}:1, aim for 4.5+)`);
+    if (tb < 4.5) bits.push(`text on the page background is hard to read (${tb.toFixed(1)}:1)`);
+    const dBg = lum(mix(g('col-bg'), g('col-card'), 0.5)) < 0.2;
+    const dText = lum(g('col-text')) < 0.2;
+    if (dBg === dText) bits.push('your text and backgrounds are both ' + (dBg ? 'dark' : 'light'));
+    note.textContent = bits.length ? 'Heads up: ' + bits.join('; ') + '.' : '';
+    note.style.display = bits.length ? 'block' : 'none';
+  }
+
+    /* ========= Persistance ========= */
+
+  function saveState() {
+    const data = {};
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      if (!el.id || el.id === 'css-output') return;
+      if (el.type === 'checkbox') data[el.id] = el.checked;
+      else if (el.type === 'radio') { if (el.checked) data['radio:' + el.name] = el.value; }
+      else data[el.id] = el.value;
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  function restoreState() {
+    let data = {};
+    try { data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) {}
+    Object.entries(data).forEach(([k, v]) => {
+      if (k.startsWith('radio:')) {
+        const r = document.querySelector(`input[name="${k.slice(6)}"][value="${v}"]`);
+        if (r) r.checked = true;
+        return;
+      }
+      const el = document.getElementById(k);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = !!v;
+      else el.value = v;
+    });
+  }
+
+  function resetAll(btn) {
+    if (!resetAll.armed) {
+      resetAll.armed = true;
+      btn.textContent = 'Click Again to Confirm';
+      resetAll.t = setTimeout(() => { resetAll.armed = false; btn.textContent = 'Reset Everything'; }, 3000);
+      return;
+    }
+    clearTimeout(resetAll.t);
+    resetAll.armed = false;
+    btn.textContent = 'Reset Everything';
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      if (el.id === 'css-output') return;
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = el.defaultChecked;
+      else if (el.tagName === 'SELECT') {
+        el.selectedIndex = 0;
+        [...el.options].forEach(o => { if (o.defaultSelected) o.selected = true; });
+      }
+      else el.value = el.defaultValue;
+    });
+    compileCSS();
+  }
+
+    /* ========= Compiler ========= */
+  function compileCSS() {
+    const $ = id => document.getElementById(id).checked;
+    const user = cleanUser(document.getElementById('username').value);
+    const scope = document.querySelector('input[name="statScope"]:checked').value;
+
+    const notJustStars = x => x.replace(/\*/g, '').trim();
+    const tags    = parseList(document.getElementById('filter-tags').value).filter(notJustStars);
+    const authors = parseList(document.getElementById('filter-authors').value);
+    const fandoms = parseList(document.getElementById('filter-fandoms').value).filter(notJustStars);
+    const works   = parseList(document.getElementById('filter-works').value).map(w => (w.match(/\d+/) || [])[0]).filter(Boolean);
+    const lang    = document.getElementById('filter-language').value;
+
+    const rFont   = document.getElementById('reading-font').value;
+    const rSize   = document.getElementById('reading-size').value;
+    const rHeight = document.getElementById('reading-height').value;
+    const rWidth  = document.getElementById('reading-width').value;
+
+    let rules = [];
+    rules.push('/* Generated with the AO3 Skin Builder */');
+
+    /* P limits a rule to the user's own works */
+    const wantMine = scope === 'mine';
+    const scoped = wantMine && user;
+    const P = scoped ? `#main:has(.byline a[href*="/users/${user}/"]) ` : '';
+    const scopedOK = !wantMine || scoped;
+    const scopeWord = scoped ? 'on your works only' : 'site-wide';
+
+    const scopedIds = ['stat-kudos', 'stat-hits', 'stat-bookmarks', 'stat-comments', 'stat-words', 'stat-chapters', 'stat-language',
+      'hide-kudos-list', 'hide-btn-kudos', 'hide-btn-bookmark', 'hide-btn-subscribe', 'hide-btn-share', 'hide-btn-download',
+      'hide-comments', 'hide-comment-form'];
+    if (wantMine && !user && scopedIds.some(id => $(id))) {
+      rules.push('/* NOTE: you chose "only on my works" but left the username blank.\n   Fill it in on tab 01 and the scoped rules will appear here. */');
+    }
+
+    /* 1 · Stats */
+    const statsToTarget = [];
+    if ($('stat-kudos'))     statsToTarget.push('kudos');
+    if ($('stat-hits'))      statsToTarget.push('hits');
+    if ($('stat-bookmarks')) statsToTarget.push('bookmarks');
+    if ($('stat-comments'))  statsToTarget.push('comments');
+    if ($('stat-words'))     statsToTarget.push('words');
+    if ($('stat-chapters'))  statsToTarget.push('chapters');
+    if ($('stat-language'))  statsToTarget.push('language');
+
+    if (statsToTarget.length > 0) {
+      if (scoped) {
+        let lines = [];
+        statsToTarget.forEach(stat => {
+          lines.push(`li.blurb:has(a[rel="author"][href*="/users/${user}/"]) dt.${stat}`);
+          lines.push(`li.blurb:has(a[rel="author"][href*="/users/${user}/"]) dd.${stat}`);
+          lines.push(`#main:has(.byline a[href*="/users/${user}/"]) .work.meta dt.${stat}`);
+          lines.push(`#main:has(.byline a[href*="/users/${user}/"]) .work.meta dd.${stat}`);
+          lines.push(`.stats-index dl dt.${stat}`);
+          lines.push(`.stats-index dl dd.${stat}`);
+          lines.push(`.stats-index th#${stat}`);
+          lines.push(`.stats-index td.${stat}`);
+          lines.push(`.stats-index td[headers~="${stat}"]`);
+        });
+        rules.push(`/* Hide stats on your works only */\n${lines.join(',\n')} {\n  display: none !important;\n}`);
+      } else if (scope === 'all') {
+        let lines = [];
+        statsToTarget.forEach(stat => {
+          lines.push(`dl.stats dt.${stat}`);
+          lines.push(`dl.stats dd.${stat}`);
+          lines.push(`.stats-index dl dt.${stat}`);
+          lines.push(`.stats-index dl dd.${stat}`);
+          lines.push(`.stats-index th#${stat}`);
+          lines.push(`.stats-index td.${stat}`);
+          lines.push(`.stats-index td[headers~="${stat}"]`);
+        });
+        rules.push(`/* Hide stats site-wide */\n${lines.join(',\n')} {\n  display: none !important;\n}`);
+      }
+    }
+
+    /* 2 · Kudos list at the end of works */
+    if ($('hide-kudos-list') && scopedOK) {
+      rules.push(`/* Hide kudos-giver list ${scopeWord} */\n${P}#feedback .kudos,\n${P}#kudos {\n  display: none !important;\n}`);
+    }
+
+    /* 3 · Engagement buttons */
+    if ($('hide-btn-kudos') && scopedOK) {
+      rules.push(`/* Hide kudos button ${scopeWord} */\n${P}#kudo_submit,\n${P}form#new_kudo {\n  display: none !important;\n}`);
+    }
+    if ($('hide-btn-bookmark') && scopedOK) {
+      rules.push(`/* Hide bookmark buttons ${scopeWord} */\n${P}a[href$="/bookmarks/new"],\n${P}li.bookmark a,\n${P}.bookmark_form_placement {\n  display: none !important;\n}`);
+    }
+    if ($('hide-btn-subscribe') && scopedOK) {
+      rules.push(`/* Hide subscribe buttons ${scopeWord} */\n${P}form[action$="/subscriptions"],\n${P}li.subscribe {\n  display: none !important;\n}`);
+    }
+    if ($('hide-btn-share') && scopedOK) {
+      rules.push(`/* Hide share button ${scopeWord} */\n${P}li.share {\n  display: none !important;\n}`);
+    }
+    if ($('hide-btn-download') && scopedOK) {
+      rules.push(`/* Hide download button ${scopeWord} */\n${P}li.download {\n  display: none !important;\n}`);
+    }
+
+    /* 4 · Comments */
+    if ($('hide-comments') && scopedOK) {
+      rules.push(`/* Hide the entire comment section ${scopeWord} */\n${P}#feedback .thread {\n  display: none !important;\n}`);
+    }
+    if ($('hide-comment-form') && scopedOK) {
+      rules.push(`/* Hide the comment form ${scopeWord} */\n${P}#add_comment,\n${P}#add_comment_placeholder {\n  display: none !important;\n}`);
+    }
+
+    /* 5 · Hide site UI */
+    if ($('hide-footer')) {
+      rules.push(`/* Hide site footer */\n#footer {\n  display: none !important;\n}`);
+    }
+    if ($('hide-icons')) {
+      rules.push(`/* Hide user icons */\nimg.icon,\n.blurb div.icon,\n.comment div.icon {\n  display: none !important;\n}`);
+    }
+
+    if ($('hide-muted-notice')) {
+      rules.push(`/* Hide muted users notice */\np.muted.notice {\n  display: none !important;\n}`);
+    }
+
+    /* 6 · Tag rows by type */
+    const both = document.querySelector('input[name="contentScope"]:checked').value === 'both';
+    const whereSel = (blurbSel, workSel) => both ? [blurbSel, workSel] : [blurbSel];
+    let tagRows = [];
+    if ($('hide-tag-warnings'))      tagRows.push(...whereSel('.blurb ul.tags li.warnings', '.work.meta .warning.tags'));
+    if ($('hide-tag-relationships')) tagRows.push(...whereSel('.blurb ul.tags li.relationships', '.work.meta .relationship.tags'));
+    if ($('hide-tag-characters'))    tagRows.push(...whereSel('.blurb ul.tags li.characters', '.work.meta .character.tags'));
+    if ($('hide-tag-freeforms'))     tagRows.push(...whereSel('.blurb ul.tags li.freeforms', '.work.meta .freeform.tags'));
+    if (tagRows.length > 0) {
+      rules.push(`/* Hide selected tag categories */\n${tagRows.join(',\n')} {\n  display: none !important;\n}`);
+    }
+
+    /* 7 · Tidy up details */
+    const postedBox = document.getElementById('hide-date-posted');
+    postedBox.disabled = !both;
+    const hide = (label, sels) => rules.push(`/* ${label} */\n${sels.join(',\n')} {\n  display: none !important;\n}`);
+
+    if ($('hide-summary'))                hide('Hide summaries', whereSel('.blurb blockquote.summary', '#workskin .preface .summary'));
+    if (both && $('hide-date-posted'))    hide('Hide posted date', ['.work.meta .stats .published']);
+    if ($('hide-date-updated'))           hide('Hide updated date', whereSel('.blurb p.datetime', '.work.meta .stats .status'));
+    if ($('hide-series'))                 hide('Hide "part of a series" lines', whereSel('.blurb ul.series', '.work.meta .series'));
+    if ($('scroll-tags')) {
+      const sels = whereSel('.blurb ul.tags', '.work.meta dd.tags');
+      rules.push(`/* Scrollable tag clouds */\n${sels.join(',\n')} {\n  max-height: 110px !important;\n  overflow-y: auto !important;\n  padding: 4px;\n  border: 1px dashed rgba(120, 110, 90, 0.4);\n}`);
+    }
+
+    /* 8 · Work page extras */
+    if ($('hide-notes')) {
+      rules.push(`/* Hide beginning notes */\n#workskin .preface .notes:not(.end) {\n  display: none !important;\n}`);
+    }
+    if ($('hide-endnotes')) {
+      rules.push(`/* Hide end notes */\n[id$="_endnotes"] {\n  display: none !important;\n}`);
+    }
+    if ($('hide-inspired')) {
+      rules.push(`/* Hide "works inspired by this one" */\n#workskin .afterword .children {\n  display: none !important;\n}`);
+    }
+
+    /* 9 · Content blockers */
+    if (tags.length > 0) {
+      let tagRules = tags.map(t => `li.blurb:has(ul.tags a.tag${hrefMatch(t, '/tags/', '/works', ao3Encode)})`);
+      rules.push(`/* Hide blurbs with blocked tags */\n${tagRules.join(',\n')} {\n  display: none !important;\n}`);
+    }
+    if (authors.some(a => cleanUser(a))) {
+      const authorPats = authors.map(a => a.split('*').map(cleanUser).join('*')).filter(a => a.replace(/\*/g, ''));
+      let authorRules = authorPats.map(a => `li.blurb:has(a[rel="author"]${hrefMatch(a, '/users/', '/pseuds/', x => x, false)})`);
+      rules.push(`/* Hide blurbs from blocked authors */\n${authorRules.join(',\n')} {\n  display: none !important;\n}`);
+    }
+    if (fandoms.length > 0) {
+      let fandomRules = fandoms.map(f => `li.blurb:has(h5.fandoms a${hrefMatch(f, '/tags/', '/works', ao3Encode)})`);
+      rules.push(`/* Hide blurbs from blocked fandoms */\n${fandomRules.join(',\n')} {\n  display: none !important;\n}`);
+    }
+    if (works.length > 0) {
+      let workRules = works.map(id => `li#work_${id},\nli.bookmark.blurb:has(h4.heading a[href$="/works/${id}"])`);
+      rules.push(`/* Hide specific works */\n${workRules.join(',\n')} {\n  display: none !important;\n}`);
+    }
+    if (lang) {
+      rules.push(`/* Hide works not in the selected language */\n.blurb:has(dd.language:not([lang="${lang}"])) {\n  display: none !important;\n}`);
+    }
+
+    /* 10 · Typography + spacing */
+    if (rFont) {
+      rules.push(`/* Font family override */\nbody, #main, #workskin, .userstuff, input, textarea, select, button {\n  font-family: ${rFont} !important;\n}`);
+    }
+    if (rSize) {
+      rules.push(`/* Story text size */\n#workskin, .userstuff {\n  font-size: ${rSize} !important;\n}`);
+    }
+    if (rHeight) {
+      rules.push(`/* Line spacing */\n#workskin, .userstuff {\n  line-height: ${rHeight} !important;\n}`);
+    }
+    if (rWidth) {
+      rules.push(`/* Reading column width */\n#workskin, .userstuff {\n  max-width: ${rWidth} !important;\n  margin-left: auto !important;\n  margin-right: auto !important;\n}`);
+    }
+
+    /* 11 · Palette */
+    if ($('use-palette')) {
+      const g = id => document.getElementById(id).value;
+      rules.push(buildThemeCSS(g('col-bg'), g('col-card'), g('col-text'), g('col-link')));
+    }
+    updatePaletteNote();
+
+    document.getElementById('css-output').value = rules.join('\n\n');
+    saveState();
+  }
+
+    /* ========= Output Actions ========= */
+    
+  function copyCSS() {
+    const el = document.getElementById('css-output');
+    const btn = document.getElementById('copy-btn');
+    const done = () => {
+      btn.textContent = 'Copied!';
+      clearTimeout(copyCSS.t);
+      copyCSS.t = setTimeout(() => { btn.textContent = 'Copy to Clipboard'; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(el.value).then(done).catch(() => { el.select(); document.execCommand('copy'); done(); });
+    } else {
+      el.select();
+      document.execCommand('copy');
+      done();
+    }
+  }
+
+  function downloadCSS() {
+    const text = document.getElementById('css-output').value;
+    const blob = new Blob([text], { type: 'text/css' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ao3-custom-skin.css';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  restoreState();
+  compileCSS();
+</script>
+</body>
+</html>
