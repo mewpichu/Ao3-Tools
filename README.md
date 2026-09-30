@@ -29,11 +29,11 @@ You'll need a userscript manager like [Tampermonkey](https://www.tampermonkey.ne
 
 | Script | What it does | Install |
 | --- | --- | --- |
-| **AO3 Read Marker** | Marks fics you've already read, so you can tell at a glance what's new in a list of results. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-read-marker.user.js) |
-| **AO3: Proximity Flags** | Flags and highlights when watchlist words or phrases appear near each other in a work. Configure your watchlist from the Userscripts dropdown menu. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-proximity-flags.user.js) |
-| **AO3: Stat Tracker** | Records your work stats each time you visit your AO3 stats page and charts them over time. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-stat-tracker.user.js) |
-| **AO3: Safe Drafting** | Adds a Safe Draft Mode: posting requires an extra confirmation step, so you can't accidentally hit Post on a draft. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-safe-drafting.user.js) |
-| **AO3: Fic Safety Net** | Saves a temporary local copy of the fic you're currently reading, in case you lose connection or the work becomes unavailable. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-fic-safety-net.user.js) |
+| **Read Marker** | Marks fics you've already read, so you can tell at a glance what's new in a list of results. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-read-marker.user.js) |
+| **Proximity Flags** | Flags and highlights when watchlist words or phrases appear near each other in a work. Configure your watchlist from the Userscripts dropdown menu. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-proximity-flags.user.js) |
+| **Stat Tracker** | Records your work stats each time you visit your AO3 stats page and charts them over time. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-stat-tracker.user.js) |
+| **Safe Drafting** | Adds a Safe Draft Mode: posting requires an extra confirmation step, so you can't accidentally hit Post on a draft. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-safe-drafting.user.js) |
+| **Fic Safety Net** | Saves a temporary local copy of the fic you're currently reading, in case you lose connection or the work becomes unavailable. | [Install](https://raw.githubusercontent.com/mewpichu/ao3-tools/main/userscripts/ao3-fic-safety-net.user.js) |
 
 ---
 
