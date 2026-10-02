@@ -1232,8 +1232,8 @@
             </span>
             <span class="ao3st-group">
               <button type="button" class="ao3st-btn" id="ao3st-darkbtn">Dark mode</button>
-              <button type="button" class="ao3st-btn" id="ao3st-import">Import JSON</button>
-              <button type="button" class="ao3st-btn" id="ao3st-export">Export JSON</button>
+              <button type="button" class="ao3st-btn" id="ao3st-import">Import</button>
+              <button type="button" class="ao3st-btn" id="ao3st-export">Export</button>
               <button type="button" class="ao3st-btn" id="ao3st-close" aria-label="Close">&times;</button>
             </span>
           </div>
