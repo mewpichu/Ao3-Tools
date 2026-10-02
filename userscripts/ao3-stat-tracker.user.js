@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AO3: Stat Tracker
 // @namespace    mewpichu-ao3-stat-tracker
-// @version      1.2.2
+// @version      2.0
 // @description  Records your work stats each time you visit your AO3 stats page, and charts them over time.
 // @author       mewpichu
 // @match        https://archiveofourown.org/users/*/stats*
@@ -410,66 +410,169 @@
     }
   }
  
-  // Data is loaded once per page load (decompression is async) and then
-  // served from memory. cb always receives the data object.
-  function prepareData(username, cb) {
-    const finish = (data) => {
-      data.works = data.works || {};
-      data.userTotals = data.userTotals || {};
-      cache = { username, data, readOnly: false };
-    };
+  // As of v2.0 the big history key lives in IndexedDB. Prefs and the
+  // sync key stay in localStorage.
+  const IDB_NAME = 'ao3StatTracker';
+  const IDB_VERSION = 1;
+  const IDB_STORE = 'history';
+  const IDB_SCHEMA = 1;
  
-    const finishThenSync = (data, isLegacy) => {
-      finish(data);
-      mergeFromSync(username, () => {
-        purgeYearScopes(cache.data);
-        // Legacy uncompressed data is rewritten in the compressed format
-        // (and the sync key created) right away.
-        if (isLegacy && hasCompression) persistData();
-        cb(cache.data);
-      });
-    };
+  let idbPromise = null;
  
-    if (cache.username === username && cache.data) return cb(cache.data);
+  function idbOpen() {
+    if (idbPromise) return idbPromise;
+    idbPromise = new Promise((resolve, reject) => {
+      if (typeof indexedDB === 'undefined') return reject(new Error('IndexedDB not available'));
+      let req;
+      try { req = indexedDB.open(IDB_NAME, IDB_VERSION); }
+      catch (e) { return reject(e); }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+      };
+      req.onsuccess = () => {
+        const db = req.result;
+        db.onversionchange = () => { db.close(); idbPromise = null; };
+        resolve(db);
+      };
+      req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+    });
+    idbPromise.catch(() => { idbPromise = null; });
+    return idbPromise;
+  }
+ 
+  // Resolves on commit
+  function idbRequest(mode, fn) {
+    return idbOpen().then((db) => new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, mode);
+      const req = fn(tx.objectStore(IDB_STORE));
+      let result;
+      req.onsuccess = () => { result = req.result; };
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || req.error);
+      tx.onabort = () => reject(tx.error || new Error('IndexedDB transaction aborted'));
+    }));
+  }
+ 
+  const idbGet = (key) => idbRequest('readonly', (store) => store.get(key));
+  const idbPut = (key, value) => idbRequest('readwrite', (store) => store.put(value, key));
+  const idbDelete = (key) => idbRequest('readwrite', (store) => store.delete(key));
+ 
+  /* ============================ Legacy localstorage ============================ */
+  // Reads the pre-v2 big key. cb receives { status, data }:
+  //   'empty'       nothing stored
+  //   'ok'          parsed successfully
+  //   'unreadable'  something is there but can't be read
+  function readLegacyLocal(username, cb) {
+    const unreadable = { status: 'unreadable', data: null };
     let raw = null;
     try { raw = localStorage.getItem(storageKey(username)); } catch (e) { /* ignore */ }
+    if (!raw) return cb({ status: 'empty', data: null });
  
-    if (raw && raw.startsWith(STORAGE_PREFIX) && hasCompression) {
+    if (raw.startsWith(STORAGE_PREFIX)) {
+      if (!hasCompression) {
+        console.error('[AO3 Stat Tracker] Stored data is compressed but this browser has no ' +
+          'CompressionStream. Your data was NOT deleted.');
+        return cb(unreadable);
+      }
       decompressText(raw.slice(STORAGE_PREFIX.length), (text) => {
-        let data;
-        try { data = fromCompact(JSON.parse(text)); }
-        catch (e) { data = { works: {}, userTotals: {} }; }
-        finish(data);
-        mergeFromSync(username, () => {
-          purgeYearScopes(cache.data);
-          let syncRaw = null;
-          try { syncRaw = localStorage.getItem(syncStorageKey(username)); } catch (e) { /* ignore */ }
-          if (!syncRaw) persistData(); // create the sync key if it is missing
-          cb(cache.data);
-        });
+        let data = null;
+        try { data = text ? fromCompact(JSON.parse(text)) : null; } catch (e) { data = null; }
+        cb(data ? { status: 'ok', data } : unreadable);
       });
       return;
     }
  
-    if (raw && raw.startsWith('lzma1:')) {
+    if (raw.startsWith('lzma1:')) {
       console.error('[AO3 Stat Tracker] Stored data is in the old LZMA format, which this build cannot read. ' +
         'Your data was NOT deleted. Import a JSON export.');
-      finish({ works: {}, userTotals: {} });
-      cache.readOnly = true;
-      cb(cache.data);
-      return;
+      return cb(unreadable);
     }
  
-    // legacy plain JSON (or compression unavailable)
+    // legacy plain JSON
     let data;
-    try { data = raw ? JSON.parse(raw) : { works: {}, userTotals: {} }; }
-    catch (e) { data = { works: {}, userTotals: {} }; }
-    // defensive- uncompressed but compact (t/s instead of title/scopes)
+    try { data = JSON.parse(raw); } catch (e) { return cb(unreadable); }
+    if (!data || typeof data !== 'object') return cb(unreadable);
     const sampleWork = data.works && data.works[Object.keys(data.works)[0]];
     if (sampleWork && sampleWork.s && !sampleWork.scopes) {
-      try { data = fromCompact(data); } catch (e) { data = { works: {}, userTotals: {} }; }
+      try { data = fromCompact(data); } catch (e) { return cb(unreadable); }
     }
-    finishThenSync(data, !!raw);
+    cb({ status: 'ok', data });
+  }
+ 
+  // One-time migration from localStorage to IndexedDB. Only called when IndexedDB
+  // has NO record. The old localStorage key remains as a backup.
+  function migrateFromLocal(username, finish) {
+    readLegacyLocal(username, ({ status, data }) => {
+      if (status === 'empty') return finish(null, 'idb', false);
+      if (status === 'unreadable') return finish(null, 'idb', true);
+ 
+      const compact = toCompact(data);
+      const expected = JSON.stringify(compact);
+      idbPut(username, { schema: IDB_SCHEMA, data: compact, savedAt: new Date().toISOString() })
+        .then(() => idbGet(username))
+        .then((check) => !!check && JSON.stringify(check.data) === expected)
+        .catch((e) => { console.warn('[AO3 Stat Tracker] migration error:', e); return false; })
+        .then((ok) => {
+          if (ok) {
+            console.log('[AO3 Stat Tracker] Migrated data to IndexedDB. Old localStorage copy kept as a backup.');
+            finish(data, 'idb', false);
+            return;
+          }
+          console.warn('[AO3 Stat Tracker] Migration could not be verified. Staying on localStorage for now.');
+          idbDelete(username).catch(() => {}).then(() => finish(data, 'local', false));
+        });
+    });
+  }
+ 
+  /* ============================ Load + Save ============================ */
+ 
+  // Data is loaded once per page load (async) and then served from memory.
+  let loadWaiters = null;
+ 
+  function prepareData(username, cb) {
+    if (cache.username === username && cache.data) return cb(cache.data);
+    if (loadWaiters) { loadWaiters.push(cb); return; }
+    loadWaiters = [cb];
+ 
+    const done = () => {
+      const waiters = loadWaiters;
+      loadWaiters = null;
+      waiters.forEach((fn) => fn(cache.data));
+    };
+ 
+    const finish = (data, backend, readOnly) => {
+      data = data || {};
+      data.works = data.works || {};
+      data.userTotals = data.userTotals || {};
+      cache = { username, data, backend, readOnly: !!readOnly };
+      if (readOnly) return done();
+      mergeFromSync(username, () => {
+        purgeYearScopes(cache.data);
+        let syncRaw = null;
+        try { syncRaw = localStorage.getItem(syncStorageKey(username)); } catch (e) { /* ignore */ }
+        if (!syncRaw) persistData();
+        done();
+      });
+    };
+ 
+    idbOpen().then(() => idbGet(username)).then((record) => {
+      if (record !== undefined) {
+        // Already in IndexedDB. Never migrate again, even if the record is
+        // empty.
+        let data;
+        try { data = fromCompact(record.data || {}); }
+        catch (e) {
+          console.error('[AO3 Stat Tracker] IndexedDB record is unreadable. Not overwriting it.', e);
+          return finish(null, 'idb', true);
+        }
+        return finish(data, 'idb', false);
+      }
+      migrateFromLocal(username, finish);
+    }, (err) => {
+      console.warn('[AO3 Stat Tracker] IndexedDB unavailable, using localStorage:', err);
+      readLegacyLocal(username, ({ status, data }) => finish(data, 'local', status === 'unreadable'));
+    });
   }
  
   let saving = false;
@@ -479,15 +582,33 @@
     const username = cache.username;
     if (!username || !cache.data || cache.readOnly) return;
     if (saving) { saveQueued = true; return; }
+    saving = true;
  
-    if (!hasCompression) { // fallback: plain JSON
-      try { localStorage.setItem(storageKey(username), JSON.stringify(cache.data)); }
-      catch (e) { console.warn('[AO3 Stat Tracker] Could not save:', e); }
+    const done = () => {
+      saving = false;
+      if (saveQueued) { saveQueued = false; persistData(); }
+    };
+    const compact = toCompact(cache.data);
+ 
+    if (cache.backend === 'idb') {
+      idbPut(username, { schema: IDB_SCHEMA, data: compact, savedAt: new Date().toISOString() })
+        .then(
+          () => console.log('[AO3 Stat Tracker] saved to IndexedDB.'),
+          (e) => console.warn('[AO3 Stat Tracker] Could not save to IndexedDB:', e)
+        )
+        .then(() => {
+          persistSyncData(compact);
+          done();
+        });
       return;
     }
  
-    saving = true;
-    const compact = toCompact(cache.data);
+    // localStorage fallback (only when IndexedDB is unavailable)
+    if (!hasCompression) {
+      try { localStorage.setItem(storageKey(username), JSON.stringify(cache.data)); }
+      catch (e) { console.warn('[AO3 Stat Tracker] Could not save:', e); }
+      return done();
+    }
     compressText(JSON.stringify(compact), (b64) => {
       if (b64) {
         try {
@@ -496,10 +617,9 @@
         } catch (e) {
           console.warn('[AO3 Stat Tracker] Could not save:', e);
         }
-        persistSyncData(compact); // rolling sync window alongside the big key
+        persistSyncData(compact);
       }
-      saving = false;
-      if (saveQueued) { saveQueued = false; persistData(); }
+      done();
     });
   }
  
@@ -1807,7 +1927,7 @@
   /* ======================================================== */
  
   try {
-    console.log('[AO3 Stat Tracker] v1.2.2 running — native compression:', hasCompression);
+    console.log('[AO3 Stat Tracker] v2.0 running — native compression:', hasCompression);
     recordSnapshot();
     initSharedMenu(10);
   } catch (e) {
