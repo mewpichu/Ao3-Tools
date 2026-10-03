@@ -606,6 +606,33 @@
     </fieldset>
 
     <fieldset>
+      <legend>[ block ratings &amp; categories ]</legend>
+      <div class="field">
+      <label class="field-label">Ratings</label>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="block-rating-general" onchange="compileCSS()"><span class="box"></span>General Audiences</label>
+        <label class="check-label"><input type="checkbox" id="block-rating-teen" onchange="compileCSS()"><span class="box"></span>Teen And Up</label>
+        <label class="check-label"><input type="checkbox" id="block-rating-mature" onchange="compileCSS()"><span class="box"></span>Mature</label>
+        <label class="check-label"><input type="checkbox" id="block-rating-explicit" onchange="compileCSS()"><span class="box"></span>Explicit</label>
+        <label class="check-label"><input type="checkbox" id="block-rating-notrated" onchange="compileCSS()"><span class="box"></span>Not Rated</label>
+      </div>
+      </div>
+      <div class="field">
+      <label class="field-label">Categories</label>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="block-cat-femslash" onchange="compileCSS()"><span class="box"></span>F/F</label>
+        <label class="check-label"><input type="checkbox" id="block-cat-het" onchange="compileCSS()"><span class="box"></span>F/M</label>
+        <label class="check-label"><input type="checkbox" id="block-cat-gen" onchange="compileCSS()"><span class="box"></span>Gen</label>
+        <label class="check-label"><input type="checkbox" id="block-cat-slash" onchange="compileCSS()"><span class="box"></span>M/M</label>
+        <label class="check-label"><input type="checkbox" id="block-cat-multi" onchange="compileCSS()"><span class="box"></span>Multi</label>
+        <label class="check-label"><input type="checkbox" id="block-cat-other" onchange="compileCSS()"><span class="box"></span>Other</label>
+        <label class="check-label"><input type="checkbox" id="block-cat-none" onchange="compileCSS()"><span class="box"></span>No Category</label>
+      </div>
+      </div>
+      <p class="help-text">Works with more than one category count as <strong>Multi</strong>, so blocking M/M won't catch an M/M + F/M work.</p>
+    </fieldset>
+
+    <fieldset>
       <legend>[ block specific tags ]</legend>
       <p class="help-text">Comma-separated, exactly as they appear on AO3. Use <code>*</code> as a wildcard, so <code>Hurt*</code> catches <code>Hurt/Comfort</code>. Special characters like <code>/</code> and <code>&amp;</code> are handled automatically.</p>
       <textarea id="filter-tags" placeholder="Underage, Coffee Shop AU, Hurt/Comfort" oninput="compileCSS()"></textarea>
@@ -1588,6 +1615,30 @@ form dd.required {
     }
 
     /* 9 · Content blockers */
+    const ratingMap = {
+      'block-rating-general':  'rating-general-audience',
+      'block-rating-teen':     'rating-teen',
+      'block-rating-mature':   'rating-mature',
+      'block-rating-explicit': 'rating-explicit',
+      'block-rating-notrated': 'rating-notrated'
+    };
+    const catMap = {
+      'block-cat-femslash': 'category-femslash',
+      'block-cat-het':      'category-het',
+      'block-cat-gen':      'category-gen',
+      'block-cat-slash':    'category-slash',
+      'block-cat-multi':    'category-multi',
+      'block-cat-other':    'category-other',
+      'block-cat-none':     'category-none'
+    };
+    const blockedRatings = Object.keys(ratingMap).filter($).map(id => `li.blurb:has(ul.required-tags span.${ratingMap[id]})`);
+    const blockedCats    = Object.keys(catMap).filter($).map(id => `li.blurb:has(ul.required-tags span.${catMap[id]})`);
+    if (blockedRatings.length > 0) {
+      rules.push(`/* Hide blurbs with blocked ratings */\n${blockedRatings.join(',\n')} {\n  display: none !important;\n}`);
+    }
+    if (blockedCats.length > 0) {
+      rules.push(`/* Hide blurbs with blocked categories */\n${blockedCats.join(',\n')} {\n  display: none !important;\n}`);
+    }
     if (tags.length > 0) {
       let tagRules = tags.map(t => `li.blurb:has(ul.tags a.tag${hrefMatch(t, '/tags/', '/works', ao3Encode)})`);
       rules.push(`/* Hide blurbs with blocked tags */\n${tagRules.join(',\n')} {\n  display: none !important;\n}`);
