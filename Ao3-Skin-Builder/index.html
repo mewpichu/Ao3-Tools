@@ -1658,7 +1658,7 @@ form dd.required {
       rules.push(`/* Hide blurbs from blocked authors */\n${authorRules.join(',\n')} {\n  display: none !important;\n}`);
     }
         if ($('block-anon')) {
-      rules.push(`/* Hide anonymous works */\nli.work.blurb:not(:has(h4.heading a[rel="author"])),\nli.bookmark.blurb:not(:has(h4.heading a[rel="author"])):not(:has(h4.heading a[href*="/external_works/"])) {\n  display: none !important;\n}`);
+      rules.push(`/* Hide anonymous works */\nli.work.blurb:not(:has(h4.heading a[rel="author"])) {\n  display: none !important;\n}`);
     }
     if (fandoms.length > 0) {
       let fandomRules = fandoms.map(f => `li.blurb:has(h5.fandoms a${hrefMatch(f, '/tags/', '/works', ao3Encode)})`);
