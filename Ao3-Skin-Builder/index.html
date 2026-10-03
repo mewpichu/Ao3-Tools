@@ -510,6 +510,7 @@
         <label class="check-label"><input type="checkbox" id="stat-words" onchange="compileCSS()"><span class="box"></span>Word Counts</label>
         <label class="check-label"><input type="checkbox" id="stat-chapters" onchange="compileCSS()"><span class="box"></span>Chapter Counts</label>
         <label class="check-label"><input type="checkbox" id="stat-language" onchange="compileCSS()"><span class="box"></span>Language</label>
+        <label class="check-label"><input type="checkbox" id="stat-page-link" onchange="compileCSS()"><span class="box"></span>Stats Page Link</label>
       </div>
     </fieldset>
 
@@ -1533,6 +1534,11 @@ form dd.required {
         });
         rules.push(`/* Hide stats site-wide */\n${lines.join(',\n')} {\n  display: none !important;\n}`);
       }
+    }
+
+    /* Only ever on your own dashboard, so it ignores the scope setting */
+    if ($('stat-page-link')) {
+      rules.push(`/* Hide the Stats link in your dashboard */\n#dashboard li:has(a[href*="/stats"]) {\n  display: none !important;\n}`);
     }
 
     /* 2 · Kudos list at the end of works */
