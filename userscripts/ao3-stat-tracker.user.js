@@ -1243,7 +1243,8 @@
               <button type="button" data-mode="cumulative">Cumulative</button>
               <button type="button" data-mode="new">New each day</button>
             </span>
-            <input type="file" id="ao3st-importfile" accept=".json,application/json" style="display:none">
+            <input type="file" id="ao3st-importfile" accept=".json,application/json,.csv,text/csv" 
+            style="display:none">
           </div>
         </div>
         <div id="ao3st-legend"></div>
@@ -1463,23 +1464,45 @@
     });
   }
  
-  function importData(file) {
+    function importData(file) {
     const username = getUsername();
     const reader = new FileReader();
     reader.onload = () => {
       prepareData(username, (data) => {
+        const text = String(reader.result || '').replace(/^\uFEFF/, '');
+        const isCsv = /\.csv$/i.test(file.name) || /^type\W+workName/.test(text);
         try {
-          const result = mergeImport(data, JSON.parse(reader.result));
+          let imported;
+          let note = '';
+          if (isCsv) {
+            const conv = convertIfkyCsv(text, data);
+            imported = conv.data;
+            const { unmatched, ambiguous, badRows } = conv.info;
+            if (unmatched.length) {
+              note += ` ${unmatched.length} work${unmatched.length === 1 ? '' : 's'} not on your stats page (added by title).`;
+              console.log('[AO3 Stat Tracker] CSV works with no matching title (renamed or deleted?):', unmatched);
+            }
+            if (ambiguous.length) {
+              note += ` ${ambiguous.length} skipped (duplicate titles).`;
+              console.warn('[AO3 Stat Tracker] CSV works skipped, title matches more than one work:', ambiguous);
+            }
+            if (badRows) console.warn(`[AO3 Stat Tracker] skipped ${badRows} unreadable CSV row(s).`);
+          } else {
+            imported = JSON.parse(text);
+          }
+          const result = mergeImport(data, imported);
           persistData();
           showToast(
             `Stat Tracker: imported ${result.added} new day${result.added === 1 ? '' : 's'}` +
-            (result.skipped ? `, skipped ${result.skipped} conflicting` : '') + '.'
+            (result.skipped ? `, skipped ${result.skipped} conflicting` : '') + '.' + note
           );
           populateWorkSelect(data);
           renderCurrent();
         } catch (e) {
           console.warn('[AO3 Stat Tracker] Import failed:', e);
-          showToast('Stat Tracker: import failed — not valid tracker JSON.');
+          showToast(isCsv
+            ? 'Stat Tracker: import failed. Is this a CSV from [AO3] Statistics Tracker?'
+            : 'Stat Tracker: import failed — not valid tracker JSON.');
         }
       });
     };
@@ -1498,6 +1521,114 @@
     }
     return Object.keys(out).length ? out : null;
   }
+
+  // Rows look like:  work;My Fic;kudos;2026-10-02 14:37;152
+  const IFKY_ROW = /^(total|work);(.*);([a-z-]+);(\d{4}-\d{2}-\d{2}) \d{2}:\d{2}\D+?(\d+)\s*$/;
+  const IFKY_WORK_STATS = ['hits', 'kudos', 'comments', 'bookmarks', 'subscriptions', 'words'];
+ 
+  // Converts their CSV into this script's JSON
+  //  -one reading per work per day of each stat
+  //  -only work stats are imported, plus User Subscriptions from the totals
+  //  -user totals are rebuilt by summing the works
+  //  -a stat missing on a day carries forward its last value
+  function convertIfkyCsv(text, data) {
+    const lines = text.split(/\r?\n/);
+    if (!/^type\W+workName\W+statName\W+date\W+value\s*$/.test(lines[0] || '')) {
+      throw new Error('unrecognized CSV header');
+    }
+ 
+    const byWork = {};
+    const subsByDay = {};
+    let badRows = 0;
+ 
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+      const m = line.match(IFKY_ROW);
+      if (!m) { badRows++; continue; }
+      const [, type, title, stat, day, raw] = m;
+      const value = Number(raw);
+      if (type === 'work') {
+        if (!title || !IFKY_WORK_STATS.includes(stat)) continue;
+        const days = byWork[title] || (byWork[title] = {});
+        const st = days[day] || (days[day] = {});
+        if (!(stat in st) || value > st[stat]) st[stat] = value;
+      } else if (stat === 'user-subscriptions') {
+        if (!(day in subsByDay) || value > subsByDay[day]) subsByDay[day] = value;
+      }
+    }
+ 
+    const titles = Object.keys(byWork);
+    if (!titles.length) throw new Error('no work rows found');
+ 
+    // Fill each work's days so every day has all six stats
+    const filled = {};
+    for (const title of titles) {
+      const last = {};
+      filled[title] = {};
+      for (const day of Object.keys(byWork[title]).sort()) {
+        const st = {};
+        for (const s of IFKY_WORK_STATS) {
+          if (s in byWork[title][day]) last[s] = byWork[title][day][s];
+          st[s] = last[s] || 0;
+        }
+        filled[title][day] = st;
+      }
+    }
+ 
+    // Rebuild user totals for every day that has work stats
+    const allDays = [...new Set(titles.flatMap((t) => Object.keys(filled[t])))].sort();
+    const subsDays = Object.keys(subsByDay).sort();
+    const firstSubs = subsDays.length ? subsByDay[subsDays[0]] : 0;
+    const workDaysSorted = {};
+    for (const t of titles) workDaysSorted[t] = Object.keys(filled[t]).sort();
+ 
+    const totals = {};
+    let lastSubs = firstSubs;
+    for (const day of allDays) {
+      const sum = { hits: 0, kudos: 0, comments: 0, bookmarks: 0, subscriptions: 0, words: 0 };
+      for (const t of titles) {
+        let latest = null;
+        for (const d of workDaysSorted[t]) { if (d <= day) latest = d; else break; }
+        if (!latest) continue; // work didn't exist yet
+        for (const s of IFKY_WORK_STATS) sum[s] += filled[t][latest][s];
+      }
+      if (day in subsByDay) lastSubs = subsByDay[day];
+      sum.userSubscriptions = lastSubs;
+      totals[day] = sum;
+    }
+ 
+    // Match titles to real work IDs
+    const idsByTitle = {};
+    const addTitle = (title, id) => {
+      const key = (title || '').trim().toLowerCase();
+      if (!key) return;
+      (idsByTitle[key] || (idsByTitle[key] = new Set())).add(String(id));
+    };
+    for (const w of scrapeWorks()) addTitle(w.title, w.id);
+    for (const id in data.works) if (/^\d+$/.test(id)) addTitle(data.works[id].title, id);
+ 
+    const works = {};
+    const unmatched = [];
+    const ambiguous = [];
+    for (const title of titles) {
+      const ids = idsByTitle[title.trim().toLowerCase()];
+      const entry = { title, scopes: { all: filled[title] } };
+      if (!ids) {
+        unmatched.push(title);
+        works[title] = entry;
+      } else if (ids.size > 1) {
+        ambiguous.push(title);
+      } else {
+        works[[...ids][0]] = entry;
+      }
+    }
+ 
+    return {
+      data: { works, userTotals: { all: totals } },
+      info: { unmatched, ambiguous, badRows },
+    };
+  } 
  
   // Merge imported data into storage. Rules:
   //  -days that don't exist yet are added
