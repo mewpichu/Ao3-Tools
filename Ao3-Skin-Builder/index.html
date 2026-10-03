@@ -643,6 +643,9 @@
       <legend>[ block specific authors ]</legend>
       <p class="help-text">Comma-separated AO3 usernames. Use <code>*</code> as a wildcard.</p>
       <textarea id="filter-authors" placeholder="username1, username2" oninput="compileCSS()"></textarea>
+      <div class="checkbox-grid">
+        <label class="check-label"><input type="checkbox" id="block-anon" onchange="compileCSS()"><span class="box"></span>Hide Anonymous Works</label>
+      </div>
     </fieldset>
 
     <fieldset>
@@ -1653,6 +1656,9 @@ form dd.required {
       const authorPats = authors.map(a => a.split('*').map(cleanUser).join('*')).filter(a => a.replace(/\*/g, ''));
       let authorRules = authorPats.map(a => `li.blurb:has(a[rel="author"]${hrefMatch(a, '/users/', '/pseuds/', x => x, false)})`);
       rules.push(`/* Hide blurbs from blocked authors */\n${authorRules.join(',\n')} {\n  display: none !important;\n}`);
+    }
+        if ($('block-anon')) {
+      rules.push(`/* Hide anonymous works */\nli.work.blurb:not(:has(h4.heading a[rel="author"])) {\n  display: none !important;\n}`);
     }
     if (fandoms.length > 0) {
       let fandomRules = fandoms.map(f => `li.blurb:has(h5.fandoms a${hrefMatch(f, '/tags/', '/works', ao3Encode)})`);
